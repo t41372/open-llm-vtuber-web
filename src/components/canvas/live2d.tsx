@@ -1,185 +1,68 @@
-import React, { useEffect, useRef, useContext } from 'react';
-import * as PIXI from 'pixi.js';
-import { Live2DModel } from 'pixi-live2d-display-lipsyncpatch';
-import { L2DContext } from '@/context/l2d-context';
-import { AiStateContext } from '@/context/ai-state-context';
-import { SubtitleContext } from '@/context/subtitle-context';
-import { ResponseContext } from '@/context/response-context';
-import { audioTaskQueue } from '@/utils/task-queue';
-import { WebSocketContext } from '@/context/websocket-context';
-
-const pointerInteractionEnabled = false;
-
-// function setExpression(model: Live2DModel, expressionIndex: number) {
-//   expressionIndex = parseInt(expressionIndex.toString());
-//   if (
-//     model &&
-//     model.internalModel &&
-//     model.internalModel.motionManager &&
-//     model.internalModel.motionManager.expressionManager
-//   ) {
-//     model.internalModel.motionManager.expressionManager.setExpression(expressionIndex);
-//     console.info(`>> [x] -> Expression set to: (${expressionIndex})`);
-//   }
-// }
-
-function makeDraggable(model: Live2DModel) {
-  model.interactive = true;
-  // model.buttonMode = true;
-  model.cursor = 'pointer';
-
-  let isDragging = false;
-  let startX = 0;
-  let startY = 0;
-
-  model.on('pointerdown', (event) => {
-    isDragging = true;
-    startX = event.data.global.x - model.x;
-    startY = event.data.global.y - model.y;
-  });
-
-  model.on('pointermove', (event) => {
-    if (isDragging) {
-      model.x = event.data.global.x - startX;
-      model.y = event.data.global.y - startY;
-    }
-  });
-
-  model.on('pointerup', () => {
-    isDragging = false;
-  });
-
-  model.on('pointerupoutside', () => {
-    isDragging = false;
-  });
-}
-
-let model2: Live2DModel | null = null;
+import React, { useEffect, useRef, useContext } from "react";
+// import { L2DContext } from "@/context/l2d-context";
+import { AiStateContext } from "@/context/ai-state-context";
+import { SubtitleContext } from "@/context/subtitle-context";
+import { ResponseContext } from "@/context/response-context";
+import { WebSocketContext } from "@/context/websocket-context";
+import { audioTaskQueue } from "@/utils/task-queue";
+import { LAppLive2DManager } from "../live2d/lapplive2dmanager";
+import { LAppDelegate } from "../live2d/lappdelegate";
+import { LAppGlManager } from "../live2d/lappglmanager";
+import * as LAppDefine from "../live2d/lappdefine";
 
 export const Live2D: React.FC = () => {
-  const { modelInfo } = useContext(L2DContext)!;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const appRef = useRef<PIXI.Application | null>(null);
-  const modelRef = useRef<Live2DModel | null>(null);
 
-  // Initialize Pixi application
   useEffect(() => {
-    if (!appRef.current && canvasRef.current) {
-      const app = new PIXI.Application({
-        view: canvasRef.current,
-        autoStart: true,
-        backgroundAlpha: 0,
-      });
-      appRef.current = app;
+    if (!canvasRef.current) return;
+
+    const resizeCanvas = () => {
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth;
+        canvasRef.current.height = window.innerHeight;
+      }
+    };
+    resizeCanvas();
+
+    const glManager = LAppGlManager.getInstance();
+    glManager.setCanvas(canvasRef.current);
+
+    if (!glManager || !LAppDelegate.getInstance().initialize()) {
+      console.error("Failed to initialize Live2D GL Manager");
+      return;
     }
-  }, []);
 
-  // Register ticker (only once)
-  useEffect(() => {
-    if (!appRef.current) return;
-    Live2DModel.registerTicker(PIXI.Ticker);
-  }, []);
+    LAppDelegate.getInstance().run();
 
-  // Resize Pixi application based on parent container size
-  const resizeApp = () => {
-    if (!appRef.current || !canvasRef.current) return;
-    const parent = canvasRef.current.parentElement;
-    if (parent) {
-      const rect = parent.getBoundingClientRect();
-      appRef.current.renderer.resize(rect.width, rect.height);
-    }
-  };
-
-  useEffect(() => {
     const handleResize = () => {
-      resizeApp();
-      if (appRef.current && modelRef.current) {
-        const app = appRef.current;
-        const model2 = modelRef.current;
-        const initXshift = modelInfo?.initialXshift || 0;
-        const initYshift = modelInfo?.initialYshift || 0;
-        model2.x = app.screen.width / 2 - model2.width / 2 + initXshift;
-        model2.y = app.screen.height / 2 - model2.height / 2 + initYshift;
+      resizeCanvas();
+      if (LAppDefine.CanvasSize === "auto") {
+        LAppDelegate.getInstance().onResize();
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    handleResize();
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
+      LAppDelegate.releaseInstance();
+      LAppGlManager.releaseInstance();
     };
-  }, [modelInfo]);
-
-  // Load model
-  useEffect(() => {
-    const loadModel = async () => {
-      if (!modelInfo) return;
-      if (!appRef.current || !modelInfo.url) return;
-
-      const app = appRef.current;
-
-      // Clear old model
-      if (modelRef.current) {
-        app.stage.removeChild(modelRef.current);
-        modelRef.current.destroy({ children: true, texture: true, baseTexture: true });
-        modelRef.current = null;
-      }
-
-      try {
-        const options = {
-          autoInteract: pointerInteractionEnabled,
-          autoUpdate: true,
-        };
-
-        const models = await Promise.all([
-          Live2DModel.from(modelInfo.url, options),
-        ]);
-
-        model2 = models[0];
-        modelRef.current = model2;
-        app.stage.addChild(model2);
-        
-        const scaleX = app.screen.width * modelInfo.kScale;
-        const scaleY = app.screen.height * modelInfo.kScale;
-        model2.scale.set(Math.min(scaleX, scaleY));
-
-        makeDraggable(model2);
-
-        model2.on('added', () => {
-          model2?.update(PIXI.Ticker.shared.deltaTime);
-        });
-
-        const initXshift = modelInfo.initialXshift || 0;
-        const initYshift = modelInfo.initialYshift || 0;
-        model2.x = app.screen.width / 2 - model2.width / 2 + initXshift;
-        model2.y = app.screen.height / 2 - model2.height / 2 + initYshift;
-        
-      } catch (error) {
-        console.error("Failed to load Live2D model:", error);
-      }
-      
-    };
-
-
-    resizeApp();
-    loadModel();
-  }, [modelInfo]);
-
-  useEffect(() => {
-    if (model2) {
-      console.log('L2dModel context updated:', model2);
-    }
-  }, [model2]);
+  }, []);
 
   return (
-    <canvas 
-      id="canvas" 
-      ref={canvasRef} 
+    <canvas
+      ref={canvasRef}
+      style={{
+        width: "100vw",
+        height: "100vh",
+        top: 0,
+        left: 0,
+        zIndex: 1,
+      }}
     />
   );
 };
-
 
 interface AudioTaskOptions {
   audio_base64: string;
@@ -193,17 +76,20 @@ export function useInterrupt() {
   const { setAiState } = useContext(AiStateContext)!;
   const { sendMessage } = useContext(WebSocketContext)!;
   const { fullResponse } = useContext(ResponseContext)!;
-  
+
   const interrupt = () => {
     console.log("Interrupting conversation chain");
-    sendMessage({ 
-      type: "interrupt-signal", 
-      text: fullResponse 
+    sendMessage({
+      type: "interrupt-signal",
+      text: fullResponse,
     });
-    setAiState('interrupted');
-    if(model2) {
-      model2.stopSpeaking();
+    setAiState("interrupted");
+
+    const model = LAppLive2DManager.getInstance().getModel(0);
+    if (model) {
+      // model._wavFileHandler.stop();
     }
+
     audioTaskQueue.clearQueue();
     console.log("Interrupted!");
   };
@@ -215,9 +101,13 @@ export function useAudioTask() {
   const { aiState } = useContext(AiStateContext)!;
   const { setSubtitleText } = useContext(SubtitleContext)!;
   const { appendResponse } = useContext(ResponseContext)!;
-  const handleAudioPlayback = (options: AudioTaskOptions, onComplete: () => void) => {
-    if (aiState === 'interrupted') {
-      console.error('Audio playback blocked. State:', aiState);
+
+  const handleAudioPlayback = async (
+    options: AudioTaskOptions,
+    onComplete: () => void
+  ) => {
+    if (aiState === "interrupted") {
+      console.error("Audio playback blocked. State:", aiState);
       onComplete();
       return;
     }
@@ -229,50 +119,61 @@ export function useAudioTask() {
       setSubtitleText(text);
     }
 
-    if (model2 == null) {
-      console.error('Model not initialized');
+    const model = LAppLive2DManager.getInstance().getModel(0);
+    if (!model) {
+      console.error("Model not initialized");
       onComplete();
       return;
     }
 
     try {
-      model2.speak('data:audio/wav;base64,' + audio_base64, {
-        expression: expression_list?.[0] || undefined,
-        resetExpression: true,
-        onFinish: () => {
-          console.log('Voiceline is over');
+      const byteCharacters = atob(audio_base64);
+      const byteArray = new Uint8Array(byteCharacters.split('').map(char => char.charCodeAt(0)));
+      const blob = new Blob([byteArray], { type: "audio/wav" });
+      const audioUrl = URL.createObjectURL(blob);
+
+      if (model._wavFileHandler) {
+        // 设置回调
+        model._wavFileHandler.onFinish = () => {
+          URL.revokeObjectURL(audioUrl);
           onComplete();
-        },
-        onError: (error) => {
-          console.error('Audio playback error:', error);
-          onComplete();
-        }
-      });
+        };
+        
+        await model._wavFileHandler.playSound(audioUrl);
+      } else {
+        console.error("WavFileHandler not initialized");
+        URL.revokeObjectURL(audioUrl);
+        onComplete();
+      }
+
+      if (expression_list && expression_list[0]) {
+        model.setExpression(expression_list[0]);
+      }
     } catch (error) {
-      console.error('Speak function error:', error);
+      console.error("Audio playback error:", error);
       onComplete();
     }
   };
 
   const addAudioTask = async (options: AudioTaskOptions) => {
-    if (aiState === 'interrupted') {
-      console.log('Skipping audio task due to interrupted state');
+    if (aiState === "interrupted") {
+      console.log("Skipping audio task due to interrupted state");
       return;
     }
 
     console.log(`Adding audio task ${options.text} to queue`);
-    
-    audioTaskQueue.addTask(() => 
+
+    audioTaskQueue.addTask(() =>
       new Promise<void>((resolve) => {
         handleAudioPlayback(options, resolve);
-      }).catch(error => {
-        console.log('Audio task error:', error);
+      }).catch((error) => {
+        console.log("Audio task error:", error);
       })
     );
   };
 
   return {
     addAudioTask,
-    appendResponse
+    appendResponse,
   };
-} 
+}

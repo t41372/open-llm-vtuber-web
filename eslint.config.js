@@ -6,7 +6,7 @@ import pluginReact from "eslint-plugin-react";
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
-    ignores: ["src/components/ui/*", "src/libs/*"]
+    ignores: ["src/components/ui/*", "src/components/live2d/*"]
   },
   {files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"]},
   {languageOptions: { globals: { bclearrowser: true } }},

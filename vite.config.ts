@@ -6,9 +6,14 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
+  root: "./",
+  base: "/",
+  publicDir: "./public",
   resolve: {
+    extensions: [".ts", ".js", ".jsx", ".tsx"],
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
+      "@framework": path.resolve(__dirname, "./Framework/src"),
     },
-  }
+  },
 });

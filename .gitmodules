@@ -1,0 +1,6 @@
+[submodule "src/live2d/Framework"]
+	path = src/live2d/Framework
+	url = https://github.com/Live2D/CubismWebFramework.git
+[submodule "src/Live2D/Render"]
+	path = src/Live2D/Render
+	url = https://github.com/couchette/cumbismweb-render.git

@@ -17,7 +17,9 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ],
+      "@framework/*": ["src/Framework/src/*"]
     }
-  }
+  },
+  "exclude": ["src/components/live2d/*", "src/Core/*", "src/Framework/src/*"]
 }

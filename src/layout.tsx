@@ -35,6 +35,7 @@ export const layoutStyles = {
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     overflow: 'hidden',
     willChange: 'transform',
+    zIndex: 100,
   },
   footer: {
     width: '100%',
