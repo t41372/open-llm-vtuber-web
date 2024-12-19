@@ -11,7 +11,7 @@ import {layoutStyles} from './layout';
 import WebsocketConnection from './components/websocket-connection';
 import {ResponseProvider} from './context/response-context';
 import {useEffect, useState} from 'react';
-import {FiArrowLeft, FiArrowRight} from 'react-icons/fi';
+import {FiChevronLeft, FiChevronRight} from 'react-icons/fi';
 
 const App: React.FC = () => {
   const [showSidebar, setShowSidebar] = useState(true);
@@ -58,9 +58,9 @@ const App: React.FC = () => {
                       >
                         {
                           showSidebar ? (
-                            <FiArrowLeft/>
+                            <FiChevronLeft/>
                           ) : (
-                            <FiArrowRight/>
+                            <FiChevronRight/>
                           )
                         }
 
