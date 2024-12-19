@@ -1,5 +1,12 @@
 export const sidebarStyles = {
   sidebar: {
+    self: {
+      h: '100%',
+      w: '100%',
+      p: 0,
+      gap: 4,
+      position: 'relative',
+    },
     container: {
       flex: 1,
       width: '100%',
@@ -14,6 +21,15 @@ export const sidebarStyles = {
       alignItems: 'center',
       gap: 1,
       p: 2,
+    },
+    collapseArrow: {
+      position: 'absolute',
+      top: '50%',
+      right: '0px',
+      transform: 'translateY(-50%)',
+      height: '60px',
+      cursor: 'pointer',
+      zIndex: 100,
     },
   },
 
