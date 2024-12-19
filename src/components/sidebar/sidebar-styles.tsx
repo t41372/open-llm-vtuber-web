@@ -22,15 +22,6 @@ export const sidebarStyles = {
       gap: 1,
       p: 2,
     },
-    collapseArrow: {
-      position: 'absolute',
-      top: '50%',
-      right: '0px',
-      transform: 'translateY(-50%)',
-      height: '60px',
-      cursor: 'pointer',
-      zIndex: 100,
-    },
   },
 
   settingUI: {

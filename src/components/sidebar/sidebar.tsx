@@ -1,5 +1,5 @@
 import {Box, Button, useDisclosure, VStack,} from '@chakra-ui/react';
-import {FiArrowLeft, FiSettings} from "react-icons/fi";
+import {FiSettings} from "react-icons/fi";
 import {sidebarStyles} from './sidebar-styles';
 import SettingUI from './setting/setting-ui';
 import ConfigCard from './config-card';
@@ -31,10 +31,6 @@ function Sidebar({ onToggle }: SidebarProps) {
             <ChatHistoryPanel />
             <SystemLogPanel />
           </Box>
-
-          <Button {...sidebarStyles.sidebar.collapseArrow} onClick={onToggle}>
-            <FiArrowLeft/>
-          </Button>
         </>
       ) : (
         <SettingUI open={open} onClose={onClose} onToggle={onToggle} />

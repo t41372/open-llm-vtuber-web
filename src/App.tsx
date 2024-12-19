@@ -1,17 +1,17 @@
 // import { StrictMode } from 'react';
-import { Box, Flex, ChakraProvider, defaultSystem, Button } from '@chakra-ui/react';
+import {Box, Button, ChakraProvider, defaultSystem, Flex} from '@chakra-ui/react';
 import Canvas from './components/canvas/canvas';
 import Sidebar from './components/sidebar/sidebar';
 import Footer from './components/footer/footer';
-import { AiStateProvider } from './context/ai-state-context';
-import { L2DProvider } from './context/l2d-context';
-import { SubtitleProvider } from './context/subtitle-context';
-import { BgUrlProvider } from './context/bgurl-context';
-import { layoutStyles } from './layout';
+import {AiStateProvider} from './context/ai-state-context';
+import {L2DProvider} from './context/l2d-context';
+import {SubtitleProvider} from './context/subtitle-context';
+import {BgUrlProvider} from './context/bgurl-context';
+import {layoutStyles} from './layout';
 import WebsocketConnection from './components/websocket-connection';
-import { ResponseProvider } from './context/response-context';
-import { useState, useEffect } from 'react';
-import { FiArrowRight } from 'react-icons/fi';
+import {ResponseProvider} from './context/response-context';
+import {useEffect, useState} from 'react';
+import {FiArrowLeft, FiArrowRight} from 'react-icons/fi';
 
 const App: React.FC = () => {
   const [showSidebar, setShowSidebar] = useState(true);
@@ -52,14 +52,19 @@ const App: React.FC = () => {
                     )}
 
                     <Box {...layoutStyles.mainContent}>
-                      {!showSidebar && (
-                        <Button
-                          {...layoutStyles.sidebarToggleButton}
-                          onClick={() => setShowSidebar(true)}
-                        >
-                          <FiArrowRight />
-                        </Button>
-                      )}
+                      <Button
+                        {...layoutStyles.sidebarToggleButton}
+                        onClick={() => setShowSidebar(!showSidebar)}
+                      >
+                        {
+                          showSidebar ? (
+                            <FiArrowLeft/>
+                          ) : (
+                            <FiArrowRight/>
+                          )
+                        }
+
+                      </Button>
                       <Box {...layoutStyles.canvas}>
                         <Canvas />
                       </Box>
