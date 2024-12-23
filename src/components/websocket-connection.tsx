@@ -126,6 +126,11 @@ function WebSocketConnection({ children }: { children: React.ReactNode }) {
           }
         }
         break;
+      case 'mic-audio-data':
+        if (message.audio) {
+          handleMicAudioData(message.audio);
+        }
+        break;
       default:
         console.warn('Unknown message type:', message.type);
     }
@@ -155,6 +160,11 @@ function WebSocketConnection({ children }: { children: React.ReactNode }) {
       default:
         console.warn('Unknown control command:', controlText);
     }
+  };
+
+  const handleMicAudioData = (audio: string) => {
+    console.log('Received mic audio data:', audio);
+    // Process the mic audio data here
   };
 
   const { sendMessage, wsState, reconnect } = useWebSocket({

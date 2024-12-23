@@ -47,6 +47,9 @@ function ASR({ onSave, onCancel }: ASRProps) {
     console.log("Set speechProbThreshold", settings.speechProbThreshold);
     console.log("Set negativeSpeechThreshold", settings.negativeSpeechThreshold);
     console.log("Set redemptionFrames", settings.redemptionFrames);
+    localStorage.setItem('speechProbThreshold', settings.speechProbThreshold.toString());
+    localStorage.setItem('negativeSpeechThreshold', settings.negativeSpeechThreshold.toString());
+    localStorage.setItem('redemptionFrames', settings.redemptionFrames.toString());
     setOriginalSettings(settings);
   };
 
