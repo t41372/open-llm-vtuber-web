@@ -1,6 +1,7 @@
 import {
   Box, Input, IconButton, HStack,
 } from '@chakra-ui/react';
+import { useState } from 'react';
 import { BsMicFill, BsPaperclip } from 'react-icons/bs';
 import { IoHandRightSharp } from 'react-icons/io5';
 import { FiChevronDown } from 'react-icons/fi';
